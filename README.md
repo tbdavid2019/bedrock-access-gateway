@@ -26,8 +26,8 @@ docker run \
   bedrock-gateway
 
 
-  # http://host.docker.internal:8887/api/v1
-  # http://host.docker.internal:8886/api/v1
+http://host.docker.internal:8887/api/v1
+http://host.docker.internal:8886/api/v1
 
 
 
