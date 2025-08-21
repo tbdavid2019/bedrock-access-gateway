@@ -1,3 +1,39 @@
+把原始作者不支援本地 docker的問題解決
+
+#!/bin/bash
+export AWS_ACCESS_KEY_ID=AKIA
+export AWS_SECRET_ACCESS_KEY=UIwbs
+export AWS_REGION=us-east-1
+
+docker run \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e API_KEY=0906541100-david \
+  -e AWS_DEFAULT_REGION=us-east-1 \
+  -e DEBUG=true \
+  --restart unless-stopped \
+  -d -p 8887:80 \
+  bedrock-gateway
+
+docker run \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e API_KEY=0906541100-david \
+  -e AWS_REGION=us-west-2 \
+  -e DEBUG=true \
+  --restart unless-stopped \
+  -d -p 8886:80 \
+  bedrock-gateway
+
+
+  # http://host.docker.internal:8887/api/v1
+  # http://host.docker.internal:8886/api/v1
+
+
+
+
+
+
 [中文](./README_CN.md)
 
 # Bedrock Access Gateway
