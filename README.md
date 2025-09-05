@@ -13,7 +13,7 @@ docker run \
   -e DEBUG=true \
   --restart unless-stopped \
   -d -p 8887:80 \
-  bedrock-gateway
+  tbdavid2019/bedrock-gateway
 
 docker run \
   -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
@@ -23,14 +23,22 @@ docker run \
   -e DEBUG=true \
   --restart unless-stopped \
   -d -p 8886:80 \
-  bedrock-gateway
+  tbdavid2019/bedrock-gateway
 
 ```
 http://host.docker.internal:8887/api/v1
 http://host.docker.internal:8886/api/v1
 
 
+```
+安裝了 QEMU 以支持多平台模擬
+創建並配置了 Docker Buildx builder 支持多平台
+使用 docker buildx build --platform linux/amd64,linux/arm64 -t tbdavid2019/bedrock-gateway:latest --push . 命令構建並推送了多平台鏡像
 
+鏡像 tbdavid2019/bedrock-gateway:latest 現在支持 AMD64 和 ARM64 架構
+可以在 x86 和 ARM64 主機上運行
+推送到了 Docker Hub，支持多平台 manifest
+```
 
 
 
