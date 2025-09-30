@@ -520,6 +520,14 @@ class BedrockModel(BaseChatModel):
             "maxTokens": chat_request.max_tokens,
             "topP": chat_request.top_p,
         }
+        
+        # Claude Sonnet 4.5 and newer models don't support both temperature and top_p
+        # Remove top_p if both are specified for these models
+        model_id = chat_request.model.lower()
+        if "claude-sonnet-4" in model_id or "claude-sonnet-5" in model_id:
+            if chat_request.temperature is not None and chat_request.top_p is not None:
+                logger.info(f"Model {chat_request.model} doesn't support both temperature and top_p, removing top_p")
+                inference_config.pop("topP", None)
 
         if chat_request.stop is not None:
             stop = chat_request.stop
