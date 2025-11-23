@@ -52,6 +52,28 @@ OpenAI-compatible RESTful APIs for Amazon Bedrock
 
 This project supports reasoning for both **Claude 3.7 Sonnet** and **DeepSeek R1**, check [How to Use](./docs/Usage.md#reasoning) for more details. You need to first run the Models API to refresh the model list.
 
+## Recent Fixes 🔧
+
+### Claude Sonnet 4.5 Parameter Compatibility Fix (2025-11-23)
+
+**Issue:** Models like `us.anthropic.claude-sonnet-4-5-20250929-v1:0` were throwing errors when both `temperature` and `top_p` parameters were provided:
+```
+Model us.anthropic.claude-sonnet-4-5-20250929-v1:0 doesn't support both temperature and top_p, removing top_p
+```
+
+**Root Cause:** The model ID detection logic only checked for `claude-sonnet-4` and `claude-sonnet-5`, but missed variants like `claude-sonnet-4-5` (with hyphen).
+
+**Fix:** Enhanced the model detection logic in `src/api/models/bedrock.py` to properly identify all Claude Sonnet 4.x and 5.x variants, including:
+- `claude-sonnet-4`
+- `claude-sonnet-4-5`
+- `claude-sonnet-5`
+- `claude-4`
+- `claude-5`
+
+The proxy now correctly removes the `top_p` parameter when both `temperature` and `top_p` are specified for these models, preventing API errors.
+
+**Action Required:** Rebuild and redeploy your Docker image to apply this fix.
+
 ## Overview
 
 Amazon Bedrock offers a wide range of foundation models (such as Claude 3 Opus/Sonnet/Haiku, Llama 2/3, Mistral/Mixtral,
