@@ -25,7 +25,7 @@ from api.setting import (
     WARMUP_START_HOUR,
     WARMUP_TIMEZONE,
 )
-from api.models.bedrock import bedrock_runtime
+from api.models.bedrock import bedrock_runtime, bedrock_model_list, list_bedrock_models
 
 config = {
     "title": TITLE,
@@ -40,6 +40,7 @@ logging.basicConfig(
 )
 app = FastAPI(**config)
 warmup_task = None
+warmup_model_id = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,13 +87,47 @@ def _within_warmup_window(now: datetime) -> bool:
     return dtime(hour=WARMUP_START_HOUR) <= current < dtime(hour=WARMUP_END_HOUR)
 
 
+def _get_warmup_model(force_refresh: bool = False) -> str | None:
+    """Resolve a valid warmup model id; fallback to first available."""
+    global bedrock_model_list, warmup_model_id
+    logger = logging.getLogger(__name__)
+
+    if warmup_model_id and not force_refresh:
+        return warmup_model_id
+
+    models = bedrock_model_list or {}
+    if force_refresh or not models:
+        models = list_bedrock_models()
+        bedrock_model_list = models
+
+    if WARMUP_MODEL in models:
+        warmup_model_id = WARMUP_MODEL
+        return warmup_model_id
+
+    if models:
+        warmup_model_id = next(iter(models.keys()))
+        logger.warning(
+            "Warmup model %s not available; fallback to %s", WARMUP_MODEL, warmup_model_id
+        )
+        return warmup_model_id
+
+    logger.warning("Warmup skipped: no available Bedrock models discovered")
+    return None
+
+
 def _ping_bedrock() -> None:
     try:
+        model_id = _get_warmup_model()
+        if not model_id:
+            return
         bedrock_runtime.converse(
-            modelId=WARMUP_MODEL,
+            modelId=model_id,
             messages=[{"role": "user", "content": [{"text": "ping"}]}],
             inferenceConfig={"maxTokens": 1, "temperature": 0},
         )
+    except bedrock_runtime.exceptions.ValidationException as exc:  # pragma: no cover - best effort
+        logging.getLogger(__name__).warning("Warmup ping failed (invalid model): %s", exc)
+        _get_warmup_model(force_refresh=True)
     except Exception as exc:  # pragma: no cover - best effort
         logging.getLogger(__name__).warning("Warmup ping failed: %s", exc)
 
