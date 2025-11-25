@@ -17,3 +17,9 @@ DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "anthropic.claude-3-sonnet-20240
 DEFAULT_EMBEDDING_MODEL = os.environ.get("DEFAULT_EMBEDDING_MODEL", "cohere.embed-multilingual-v3")
 ENABLE_CROSS_REGION_INFERENCE = os.environ.get("ENABLE_CROSS_REGION_INFERENCE", "true").lower() != "false"
 ENABLE_APPLICATION_INFERENCE_PROFILES = os.environ.get("ENABLE_APPLICATION_INFERENCE_PROFILES", "true").lower() != "false"
+ENABLE_WARMUP_PINGER = os.environ.get("ENABLE_WARMUP_PINGER", "false").lower() == "true"
+WARMUP_INTERVAL_SECONDS = int(os.environ.get("WARMUP_INTERVAL_SECONDS", "600"))
+WARMUP_TIMEZONE = os.environ.get("WARMUP_TIMEZONE", "Asia/Taipei")
+WARMUP_START_HOUR = int(os.environ.get("WARMUP_START_HOUR", "8"))
+WARMUP_END_HOUR = int(os.environ.get("WARMUP_END_HOUR", "18"))
+WARMUP_MODEL = os.environ.get("WARMUP_MODEL", DEFAULT_MODEL)

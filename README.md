@@ -50,8 +50,38 @@ docker push tbdavid2019/bedrock-gateway:latest
 # 可以直接使用: docker pull tbdavid2019/bedrock-gateway:latest
 ```
 
+## 預熱/暖機設定（台北時區、週一到週五 08:00-18:00，每 10 分鐘 Ping）
 
-[中文](./README_CN.md)
+- 功能說明：容器內的背景任務會在工作日時段內每 `WARMUP_INTERVAL_SECONDS` 秒呼叫一次 Bedrock（極短 prompt+`maxTokens=1`），保持模型熱身。
+- 啟用方式：設 `ENABLE_WARMUP_PINGER=true` 即可，無須改 Dockerfile；調整時段/頻率/模型用下列環境變數。
+- 關閉方式：把 `ENABLE_WARMUP_PINGER` 設為 `false`（或移除），重啟容器。
+
+示例環境變數（台北時區、週一至週五 08:00-18:00，每 10 分鐘，預設使用 `DEFAULT_MODEL`）：
+```bash
+ENABLE_WARMUP_PINGER=true
+WARMUP_TIMEZONE=Asia/Taipei
+WARMUP_START_HOUR=8
+WARMUP_END_HOUR=18
+WARMUP_INTERVAL_SECONDS=600
+# 如要指定其他模型，解開下一行
+# WARMUP_MODEL=anthropic.claude-3-7-sonnet-20250219-v1:0
+```
+
+### 使用 .env 啟動容器
+
+提供 `.env.example`，可複製為 `.env` 後編輯並啟動：
+```bash
+cp .env.example .env
+# 編輯 .env 填入實際金鑰/API_KEY 等
+docker run \
+  --env-file .env \
+  --restart unless-stopped \
+  -d -p 8886:80 \
+  --name bedrock-gateway \
+  tbdavid2019/bedrock-gateway
+```
+
+
 
 # Bedrock Access Gateway
 
