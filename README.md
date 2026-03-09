@@ -93,6 +93,19 @@ This project supports reasoning for both **Claude 3.7 Sonnet** and **DeepSeek R1
 
 ## Recent Fixes 🔧
 
+### Support for Global Inference Profiles (e.g. global.anthropic.claude-sonnet-4-6) (2026-03-08)
+
+**Issue:** Calling AWS system-defined cross-region models with arbitrary prefixes like `global.anthropic.claude-sonnet-4-6` via external clients (e.g., OpenWebUI, LibreChat) previously threw a frontend error:
+```
+Error: Cannot read properties of undefined (reading 'length')
+```
+
+**Root Cause:** The Gateway used to prepend hardcoded region prefixes (like `us.`) to foundation model IDs to build profile names. Since `global.` didn't match the hardcoded region rule, the proxy returned an `HTTP 400 Bad Request` instead of the expected `{ choices: [...] }` array format.
+
+**Fix:** Modified `src/api/models/bedrock.py` to dynamically fetch all `SYSTEM_DEFINED` inference profiles directly from the AWS Bedrock API, native mapping without unreliable string concatenation prefix logic.
+
+**Action Required:** Rebuild and redeploy your Docker image (or restart your local Python server) to apply this fix and enable `global.` model inferences correctly.
+
 ### Claude Sonnet 4.5 Parameter Compatibility Fix (2025-11-23)
 
 **Issue:** Models like `us.anthropic.claude-sonnet-4-5-20250929-v1:0` were throwing errors when both `temperature` and `top_p` parameters were provided:

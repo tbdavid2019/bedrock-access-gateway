@@ -111,7 +111,25 @@ def list_bedrock_models() -> dict:
             # List system defined inference profile IDs
             paginator = bedrock_client.get_paginator('list_inference_profiles')
             for page in paginator.paginate(maxResults=1000, typeEquals="SYSTEM_DEFINED"):
-                profile_list.extend([p["inferenceProfileId"] for p in page["inferenceProfileSummaries"]])
+                for profile in page["inferenceProfileSummaries"]:
+                    try:
+                        profile_id = profile.get("inferenceProfileId")
+                        if not profile_id:
+                            continue
+                        
+                        profile_list.append(profile_id)
+                        
+                        # Process all models mapped under this system profile
+                        models = profile.get("models", [])
+                        for model in models:
+                            model_arn = model.get("modelArn", "")
+                            if model_arn:
+                                m_id = model_arn.split('/')[-1] if '/' in model_arn else model_arn
+                                if m_id:
+                                    app_profiles_by_model[m_id].add(profile_id)
+                    except Exception as e:
+                        logger.warning(f"Error processing system profile: {e}")
+                        continue
 
         if ENABLE_APPLICATION_INFERENCE_PROFILES:
             # List application defined inference profile IDs and create mapping
@@ -521,12 +539,13 @@ class BedrockModel(BaseChatModel):
             "topP": chat_request.top_p,
         }
         
-        # Claude Sonnet 4.x and newer models don't support both temperature and top_p
+        # Claude Sonnet/Opus 4.x and newer models don't support both temperature and top_p
         # Remove top_p if both are specified for these models
         model_id = chat_request.model.lower()
-        # Check for Claude Sonnet 4.x, 5.x (covers claude-sonnet-4, claude-sonnet-4-5, claude-sonnet-5, etc.)
+        # Check for Claude 4.x, 5.x (covers sonnet and opus)
         if ("claude-sonnet-4" in model_id or "claude-sonnet-5" in model_id or 
-            "claude-sonnet-4-5" in model_id or "claude-4" in model_id or "claude-5" in model_id):
+            "claude-opus-4" in model_id or "claude-opus-5" in model_id or
+            "claude-4" in model_id or "claude-5" in model_id):
             if chat_request.temperature is not None and chat_request.top_p is not None:
                 logger.info(f"Model {chat_request.model} doesn't support both temperature and top_p, removing top_p")
                 inference_config.pop("topP", None)
